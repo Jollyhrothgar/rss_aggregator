@@ -20,6 +20,7 @@ a latent space of possible variables in langauge space.
 ## Extracting Features
 
 ## Modeling
+spacy?
 
 ## Front End
 
