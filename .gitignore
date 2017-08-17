@@ -1,0 +1,34 @@
+# Ignore vim shit
+.*.swp
+tags
+
+# Ignore MacOS DS files
+.DS_Store
+
+# Compiled python
+*.pyc
+
+# Project files
+*.project
+
+# Distribution / packaging
+.Python
+env/
+.ipynb_check*
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+
+*.egg-info/
+*.egg
+*.idea/
+
+# virtual environments
+venv*
+
+# Temporary Editor Files
+# data folder at this level
+/data
