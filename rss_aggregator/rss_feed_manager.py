@@ -60,7 +60,7 @@ class RSSFeed(object):
         self.message = None
 
     def __repr__(self):
-        return "key {}, url {}, #stories {}".format(self.key, self.url, len(self.data['entries']))
+        return "RSSFeed.__repr__: key:{}, url:{}, stories:{}".format(self.key, self.url, len(self.data['entries']))
 
 class RSSFeedManager(object):
     def __init__(self, feed_list, update_interval, num_processes):
@@ -114,6 +114,7 @@ class RSSFeedManager(object):
         global news_queue
 
         while True:
+            # only RSSFeed objects are pushed onto the queue
             data = news_queue.get()
             logging.info('GOT {}'.format(data))
             self.test_state.append(data)
