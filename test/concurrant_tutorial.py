@@ -91,7 +91,6 @@ start_time = time.time()
 with multiprocessing.Pool(processes=NUM_WORKERS) as pool:
     results = pool.map_async(check_website, WEBSITE_LIST)
     results.wait()
-    print(results.get())
  
 end_time = time.time()        
  
