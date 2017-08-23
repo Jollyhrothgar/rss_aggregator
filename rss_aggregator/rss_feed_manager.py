@@ -115,9 +115,11 @@ class RSSFeedManager(object):
 
         while True:
             # only RSSFeed objects are pushed onto the queue
-            data = news_queue.get()
-            logging.info('GOT {}'.format(data))
-            self.test_state.append(data)
+            feed = news_queue.get()
+            logging.info('GOT {}'.format(feed))
+            for entry in feed.data['entries']:
+                logging.info('STORY {}'.format(entry['title']))
+            self.test_state.append(feed)
             logging.info('RSSFeedManager.echo_results, test_state:{}, news_queue.empty():{}'.format(len(self.test_state), news_queue.empty()))
 
 if __name__ == "__main__":
