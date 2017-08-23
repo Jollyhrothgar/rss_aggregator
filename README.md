@@ -1,7 +1,3 @@
-# Theme
-
-The hackathon theme is to provide user experience personalization
-
 # Project Statement
 
 News aggregators like Google News, Apple News, Flipboard, etc, provide a
@@ -15,13 +11,12 @@ a latent space of possible variables in langauge space.
 
 ## Aggregation of Data
 
-- Use RSS reader
-
 ## Extracting Features
 
 ## Modeling
-spacy?
 
 ## Front End
 
 Javascript + Flask + Python
+
+- Android app?
