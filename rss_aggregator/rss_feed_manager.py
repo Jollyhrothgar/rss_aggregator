@@ -1,25 +1,28 @@
 import feedparser
 import requests
 
+import rss_config as cfg
 from io import BytesIO
 import json
 import copy
 import re
 import html
 import time
-import logging
+import cfg.log
 import multiprocessing
 from threading import Thread
-from queue import Queue
+import queue
+import logging as log
 
-## TODO
-# 1. Multithreading - Everything writes to the queue
-# 2. Separate thread reads from queue and updates a database
+from .logger import setup_logging
+
+setup_logging
+
+_news_queue = multiprocessing.Queue() 
+_control_queue = queue.Queue()
+
 
 logging.basicConfig(level=logging.DEBUG)
-news_queue = multiprocessing.Queue() # must be multiprocessing queue to share
-                                     # queue across processes
-control_queue = Queue()
 
 def santize_html(s):
     """Take an input string s, find all things that look like SGML character
@@ -75,52 +78,69 @@ class RSSFeedManager(object):
     def add_feed(self, url, key=None):
         if key is None:
             key = url
-            logging.info("RSSFeedManager.add_feed: key:{}, url:{}, update_interval:{}".format(url, key, self.update_interval))
-        logging.info("RSSFeedManager.add_feed: key:{}, url:{}, update_interval:{}".format(url, key, self.update_interval))
+            cfg.log.info(
+                    "RSSFeedManager.add_feed: key:{}, url:{}, update_interval:{}".format(
+                        url, key, self.update_interval))
+        cfg.log.info(
+                "RSSFeedManager.add_feed: key:{}, url:{}, update_interval:{}".format(
+                    url, key, self.update_interval))
         self.feeds[key] = RSSFeed(url, key)
         return
 
     def download_feed(self, feed):
         '''
         :param feed: an RSSFeed type object
-        :param news_queue: put news on the queue for processing
+        :param _news_queue: put news on the queue for processing
         '''
-        global news_queue
+        global _news_queue
 
         try:
             resp = requests.get(feed.url, timeout=20.0) 
         except requests.ReadTimeout:
-            logging.warn("RSSFeedManager.download_feed: timeout, key:{}".format(feed.key))
+            cfg.log.warn("RSSFeedManager.download_feed: timeout, key:{}".format(feed.key))
             return
         content = BytesIO(resp.content)
         feed.data=feedparser.parse(content)
         feed.message="SUCCESS"
-        logging.info("RSSFeedManager.download_feed: stories:{}, key:{}".format(len(feed.data['entries']), feed.key))
-        news_queue.put(feed)
+        cfg.log.info(
+                "RSSFeedManager.download_feed: stories:{}, key:{}".format(
+                    len(feed.data['entries']), feed.key))
+        _news_queue.put(feed)
     
     # run feed updater on its own thread
     def get_feeds(self):
         # add means to terminate updating.
-        global news_queue
+        global _news_queue
         while True:
-            logging.info("RSSFeedManager.get_feeds updating".format(self.update_interval))
+            cfg.log.info("RSSFeedManager.get_feeds updating".format(self.update_interval))
             with multiprocessing.Pool(processes=self.num_processes) as pool:
                 results = pool.map_async(self.download_feed, list(self.feeds.values()))
                 results.wait()
-            logging.info("RSSFeedManager.get_feeds sleeping")
+            cfg.log.info("RSSFeedManager.get_feeds sleeping")
             time.sleep(self.update_interval)
 
     def echo_results(self):
-        global news_queue
+        global _news_queue
 
         while True:
             # only RSSFeed objects are pushed onto the queue
-            feed = news_queue.get()
-            logging.info('GOT {}'.format(feed))
+            feed = _news_queue.get()
+            cfg.log.info('GOT {}'.format(feed))
             for entry in feed.data['entries']:
-                logging.info('STORY {}'.format(entry['title']))
+                cfg.log.info('STORY {}'.format(entry['title']))
             self.test_state.append(feed)
-            logging.info('RSSFeedManager.echo_results, test_state:{}, news_queue.empty():{}'.format(len(self.test_state), news_queue.empty()))
+            cfg.log.info(
+                    'RSSFeedManager.echo_results, test_state:{}, _news_queue.empty():{}'.format(
+                        len(self.test_state), _news_queue.empty()))
+
+def start_listener():
+    """ Starts the RSSFeedManager on a thread. """
+    r = RSSFeedManager(feed_list=cfg.feeds, update_interval=cfg.update_interval)
+
+def stop_listener():
+    """ Stops the RSSFeedManager thread """
+
+   
 
 if __name__ == "__main__":
     with open('feeds.json','r') as f:
