@@ -20,3 +20,9 @@ a latent space of possible variables in langauge space.
 Javascript + Flask + Python
 
 - Android app?
+
+# Awesome Integrations / TODO
+
+## Reading and Parsing News Articles
+
+https://github.com/codelucas/newspaper
